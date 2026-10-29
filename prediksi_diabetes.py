@@ -54,6 +54,14 @@ def simpan_pasien(nama, usia, gula, bmi, riwayat, hasil):
         )
 
 
+def ambil_semua_pasien():
+    with sqlite3.connect(DB_PATH) as conn:
+        return conn.execute(
+            "SELECT id, nama_pasien, usia, gula_darah, bmi, riwayat_ortu, hasil_prediksi "
+            "FROM pasien ORDER BY id DESC"
+        ).fetchall()
+
+
 # ======================================================================
 # LOGIKA PREDIKSI
 # ======================================================================
@@ -191,6 +199,7 @@ class AplikasiDiabetes(tk.Tk):
         frame_btn = tk.Frame(self, bg="#f5f5f5")
         frame_btn.pack(pady=18)
         ttk.Button(frame_btn, text="Prediksi & Simpan", command=self.proses_prediksi).grid(row=0, column=0, padx=5)
+        ttk.Button(frame_btn, text="Lihat Data", command=self.lihat_data).grid(row=0, column=1, padx=5)
 
         # Hasil prediksi
         tk.Label(self, text="Hasil Prediksi:", bg="#f5f5f5",
@@ -223,6 +232,52 @@ class AplikasiDiabetes(tk.Tk):
         bg, fg = WARNA_RISIKO[hasil]
         self.lbl_hasil.config(text=f"Risiko {hasil}", bg=bg, fg=fg)
         messagebox.showinfo("Berhasil", f"Data {nama} tersimpan.\nHasil prediksi: Risiko {hasil}")
+
+    def lihat_data(self):
+        win = tk.Toplevel(self)
+        win.title("Riwayat Data Pasien")
+        win.geometry("820x400")
+
+        kolom = ("id", "nama", "usia", "gula", "bmi", "riwayat", "hasil")
+        judul = ("ID", "Nama Pasien", "Usia", "Gula Darah", "BMI", "Riwayat Ortu", "Hasil Prediksi")
+        lebar = (45, 200, 60, 90, 70, 100, 130)
+
+        frame = tk.Frame(win)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        tree = ttk.Treeview(frame, columns=kolom, show="headings")
+        for k, j, w in zip(kolom, judul, lebar):
+            tree.heading(k, text=j)
+            tree.column(k, width=w, anchor="center" if k != "nama" else "w")
+
+        sb = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=sb.set)
+        tree.pack(side="left", fill="both", expand=True)
+        sb.pack(side="right", fill="y")
+
+        # Warna baris sesuai risiko
+        tree.tag_configure("Rendah", background="#c8e6c9")
+        tree.tag_configure("Waspada", background="#fff59d")
+        tree.tag_configure("Sedang", background="#ffcc80")
+        tree.tag_configure("Tinggi", background="#ef9a9a")
+        tree.tag_configure("Sangat Tinggi", background="#e57373")
+
+        def muat():
+            tree.delete(*tree.get_children())
+            for r in ambil_semua_pasien():
+                tree.insert("", "end", values=r, tags=(r[6],))
+            lbl_total.config(text=f"Total data: {len(tree.get_children())}")
+
+        bawah = tk.Frame(win)
+        bawah.pack(fill="x", padx=10, pady=(0, 10))
+        lbl_total = tk.Label(bawah, text="")
+        lbl_total.pack(side="left")
+        ttk.Button(bawah, text="Tutup", command=win.destroy).pack(side="right")
+
+        try:
+            muat()
+        except sqlite3.Error as e:
+            messagebox.showerror("Kesalahan Database", f"Gagal membaca data:\n{e}", parent=win)
 
 
 if __name__ == "__main__":
