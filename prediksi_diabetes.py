@@ -45,6 +45,41 @@ def init_db():
 
 
 # ======================================================================
+# LOGIKA PREDIKSI
+# ======================================================================
+def prediksi_risiko(gula, bmi, riwayat_ortu):
+    """
+    Menentukan tingkat risiko diabetes.
+
+    Aturan:
+    1. Gula >= 200            -> Tinggi / Sangat Tinggi
+         (Sangat Tinggi bila BMI >= 30 ATAU ada riwayat orang tua)
+    2. Gula 140 - 199         -> Sedang / Tinggi
+         (Tinggi bila BMI >= 30 ATAU ada riwayat orang tua)
+    3. Gula < 140 & BMI >= 30 -> Waspada / Sedang
+         (Sedang bila ada riwayat orang tua)
+    4. Gula < 140, BMI < 30, ada riwayat   -> Waspada
+    5. Gula < 140, BMI < 30, tanpa riwayat -> Rendah
+    """
+    ada_riwayat = riwayat_ortu == "Ya"
+    obesitas = bmi >= 30
+    faktor_tambahan = obesitas or ada_riwayat
+
+    if gula >= 200:
+        return "Sangat Tinggi" if faktor_tambahan else "Tinggi"
+
+    if 140 <= gula < 200:
+        return "Tinggi" if faktor_tambahan else "Sedang"
+
+    # gula < 140
+    if obesitas:
+        return "Sedang" if ada_riwayat else "Waspada"
+    if ada_riwayat:
+        return "Waspada"
+    return "Rendah"
+
+
+# ======================================================================
 # APLIKASI TKINTER
 # ======================================================================
 class AplikasiDiabetes(tk.Tk):
