@@ -7,6 +7,7 @@ Database 'prediksi_diabetes.db' dibuat otomatis di folder yang sama dengan skrip
 """
 
 import os
+import re
 import sqlite3
 import tkinter as tk
 from tkinter import ttk
@@ -77,6 +78,52 @@ def prediksi_risiko(gula, bmi, riwayat_ortu):
     if ada_riwayat:
         return "Waspada"
     return "Rendah"
+
+
+# ======================================================================
+# VALIDASI INPUT
+# ======================================================================
+def parse_angka(teks):
+    """Mengubah teks menjadi float (menerima koma atau titik sebagai desimal)."""
+    return float(teks.strip().replace(",", "."))
+
+
+def validasi_input(nama, usia_s, gula_s, bmi_s, riwayat):
+    """Mengembalikan (data_valid, pesan_error)."""
+    nama = nama.strip()
+    if not nama:
+        return None, "Nama pasien tidak boleh kosong."
+    if len(nama) < 2 or len(nama) > 100:
+        return None, "Nama pasien harus 2 - 100 karakter."
+    if not re.fullmatch(r"[A-Za-z\s.'\-]+", nama):
+        return None, "Nama pasien hanya boleh berisi huruf, spasi, titik, apostrof, dan tanda hubung."
+
+    if not usia_s.strip():
+        return None, "Usia tidak boleh kosong."
+    if not usia_s.strip().isdigit():
+        return None, "Usia harus berupa bilangan bulat positif."
+    usia = int(usia_s.strip())
+    if not 1 <= usia <= 120:
+        return None, "Usia harus antara 1 - 120 tahun."
+
+    try:
+        gula = parse_angka(gula_s)
+    except ValueError:
+        return None, "Kadar gula darah harus berupa angka."
+    if not 20 <= gula <= 800:
+        return None, "Kadar gula darah harus antara 20 - 800 mg/dL."
+
+    try:
+        bmi = parse_angka(bmi_s)
+    except ValueError:
+        return None, "BMI harus berupa angka."
+    if not 10 <= bmi <= 70:
+        return None, "BMI harus antara 10 - 70."
+
+    if riwayat not in ("Ya", "Tidak"):
+        return None, "Pilih riwayat diabetes orang tua (Ya/Tidak)."
+
+    return (nama, usia, gula, bmi, riwayat), None
 
 
 # ======================================================================
