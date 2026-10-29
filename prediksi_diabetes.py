@@ -61,6 +61,30 @@ class AplikasiDiabetes(tk.Tk):
             self, text="Prediksi Risiko Diabetes",
             font=("Segoe UI", 16, "bold"), bg="#f5f5f5", fg="#1a237e",
         ).pack(pady=(15, 5))
+        tk.Label(
+            self, text="Isi data pasien di bawah ini",
+            font=("Segoe UI", 9), bg="#f5f5f5", fg="#555",
+        ).pack(pady=(0, 10))
+
+        form = tk.Frame(self, bg="#f5f5f5")
+        form.pack(padx=25, fill="x")
+        form.columnconfigure(1, weight=1)
+
+        self.var_nama = tk.StringVar()
+        self.var_usia = tk.StringVar()
+        self.var_gula = tk.StringVar()
+        self.var_bmi = tk.StringVar()
+
+        baris = [
+            ("Nama Pasien", self.var_nama, None),
+            ("Usia (tahun)", self.var_usia, None),
+            ("Gula Darah (mg/dL)", self.var_gula, None),
+            ("BMI", self.var_bmi, None),
+        ]
+        for i, (label, var, _) in enumerate(baris):
+            tk.Label(form, text=label, bg="#f5f5f5", anchor="w",
+                     font=("Segoe UI", 10)).grid(row=i, column=0, sticky="w", pady=6)
+            ttk.Entry(form, textvariable=var, width=28).grid(row=i, column=1, sticky="ew", padx=(10, 0))
 
 
 if __name__ == "__main__":
