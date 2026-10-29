@@ -74,6 +74,7 @@ class AplikasiDiabetes(tk.Tk):
         self.var_usia = tk.StringVar()
         self.var_gula = tk.StringVar()
         self.var_bmi = tk.StringVar()
+        self.var_riwayat = tk.StringVar()
 
         baris = [
             ("Nama Pasien", self.var_nama, None),
@@ -85,6 +86,15 @@ class AplikasiDiabetes(tk.Tk):
             tk.Label(form, text=label, bg="#f5f5f5", anchor="w",
                      font=("Segoe UI", 10)).grid(row=i, column=0, sticky="w", pady=6)
             ttk.Entry(form, textvariable=var, width=28).grid(row=i, column=1, sticky="ew", padx=(10, 0))
+
+        tk.Label(form, text="Riwayat Diabetes Ortu", bg="#f5f5f5", anchor="w",
+                 font=("Segoe UI", 10)).grid(row=4, column=0, sticky="w", pady=6)
+        self.cmb_riwayat = ttk.Combobox(
+            form, textvariable=self.var_riwayat, values=["Ya", "Tidak"],
+            state="readonly", width=26,
+        )
+        self.cmb_riwayat.grid(row=4, column=1, sticky="ew", padx=(10, 0))
+        self.cmb_riwayat.current(1)  # default: Tidak
 
 
 if __name__ == "__main__":
