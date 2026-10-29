@@ -62,6 +62,11 @@ def ambil_semua_pasien():
         ).fetchall()
 
 
+def hapus_pasien(id_pasien):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("DELETE FROM pasien WHERE id = ?", (id_pasien,))
+
+
 # ======================================================================
 # LOGIKA PREDIKSI
 # ======================================================================
@@ -200,6 +205,7 @@ class AplikasiDiabetes(tk.Tk):
         frame_btn.pack(pady=18)
         ttk.Button(frame_btn, text="Prediksi & Simpan", command=self.proses_prediksi).grid(row=0, column=0, padx=5)
         ttk.Button(frame_btn, text="Lihat Data", command=self.lihat_data).grid(row=0, column=1, padx=5)
+        ttk.Button(frame_btn, text="Reset", command=self.reset_form).grid(row=0, column=2, padx=5)
 
         # Hasil prediksi
         tk.Label(self, text="Hasil Prediksi:", bg="#f5f5f5",
@@ -209,6 +215,13 @@ class AplikasiDiabetes(tk.Tk):
             width=22, height=2, bg="#cfd8dc", fg="#37474f",
         )
         self.lbl_hasil.pack(pady=8)
+
+        tk.Label(
+            self,
+            text="* Aplikasi ini hanya alat bantu skrining sederhana,\n"
+                 "bukan pengganti diagnosis dokter.",
+            font=("Segoe UI", 8, "italic"), bg="#f5f5f5", fg="#777",
+        ).pack(pady=(5, 0))
 
     # ---------------- Aksi ----------------
     def proses_prediksi(self):
@@ -232,6 +245,14 @@ class AplikasiDiabetes(tk.Tk):
         bg, fg = WARNA_RISIKO[hasil]
         self.lbl_hasil.config(text=f"Risiko {hasil}", bg=bg, fg=fg)
         messagebox.showinfo("Berhasil", f"Data {nama} tersimpan.\nHasil prediksi: Risiko {hasil}")
+
+    def reset_form(self):
+        self.var_nama.set("")
+        self.var_usia.set("")
+        self.var_gula.set("")
+        self.var_bmi.set("")
+        self.cmb_riwayat.current(1)
+        self.lbl_hasil.config(text="-", bg="#cfd8dc", fg="#37474f")
 
     def lihat_data(self):
         win = tk.Toplevel(self)
@@ -268,11 +289,22 @@ class AplikasiDiabetes(tk.Tk):
                 tree.insert("", "end", values=r, tags=(r[6],))
             lbl_total.config(text=f"Total data: {len(tree.get_children())}")
 
+        def hapus_terpilih():
+            sel = tree.selection()
+            if not sel:
+                messagebox.showinfo("Info", "Pilih data yang ingin dihapus.", parent=win)
+                return
+            if messagebox.askyesno("Konfirmasi", "Hapus data yang dipilih?", parent=win):
+                for item in sel:
+                    hapus_pasien(tree.item(item)["values"][0])
+                muat()
+
         bawah = tk.Frame(win)
         bawah.pack(fill="x", padx=10, pady=(0, 10))
         lbl_total = tk.Label(bawah, text="")
         lbl_total.pack(side="left")
         ttk.Button(bawah, text="Tutup", command=win.destroy).pack(side="right")
+        ttk.Button(bawah, text="Hapus Terpilih", command=hapus_terpilih).pack(side="right", padx=5)
 
         try:
             muat()
