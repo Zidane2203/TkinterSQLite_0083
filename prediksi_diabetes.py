@@ -10,7 +10,7 @@ import os
 import re
 import sqlite3
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prediksi_diabetes.db")
 
@@ -42,6 +42,15 @@ def init_db():
                 hasil_prediksi TEXT   NOT NULL
             )
             """
+        )
+
+
+def simpan_pasien(nama, usia, gula, bmi, riwayat, hasil):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO pasien (nama_pasien, usia, gula_darah, bmi, riwayat_ortu, hasil_prediksi) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (nama, usia, gula, bmi, riwayat, hasil),
         )
 
 
@@ -177,6 +186,43 @@ class AplikasiDiabetes(tk.Tk):
         )
         self.cmb_riwayat.grid(row=4, column=1, sticky="ew", padx=(10, 0))
         self.cmb_riwayat.current(1)  # default: Tidak
+
+        # Tombol
+        frame_btn = tk.Frame(self, bg="#f5f5f5")
+        frame_btn.pack(pady=18)
+        ttk.Button(frame_btn, text="Prediksi & Simpan", command=self.proses_prediksi).grid(row=0, column=0, padx=5)
+
+        # Hasil prediksi
+        tk.Label(self, text="Hasil Prediksi:", bg="#f5f5f5",
+                 font=("Segoe UI", 10, "bold")).pack()
+        self.lbl_hasil = tk.Label(
+            self, text="-", font=("Segoe UI", 18, "bold"),
+            width=22, height=2, bg="#cfd8dc", fg="#37474f",
+        )
+        self.lbl_hasil.pack(pady=8)
+
+    # ---------------- Aksi ----------------
+    def proses_prediksi(self):
+        data, error = validasi_input(
+            self.var_nama.get(), self.var_usia.get(),
+            self.var_gula.get(), self.var_bmi.get(), self.var_riwayat.get(),
+        )
+        if error:
+            messagebox.showwarning("Input Tidak Valid", error)
+            return
+
+        nama, usia, gula, bmi, riwayat = data
+        hasil = prediksi_risiko(gula, bmi, riwayat)
+
+        try:
+            simpan_pasien(nama, usia, gula, bmi, riwayat, hasil)
+        except sqlite3.Error as e:
+            messagebox.showerror("Kesalahan Database", f"Gagal menyimpan data:\n{e}")
+            return
+
+        bg, fg = WARNA_RISIKO[hasil]
+        self.lbl_hasil.config(text=f"Risiko {hasil}", bg=bg, fg=fg)
+        messagebox.showinfo("Berhasil", f"Data {nama} tersimpan.\nHasil prediksi: Risiko {hasil}")
 
 
 if __name__ == "__main__":
